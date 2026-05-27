@@ -5,8 +5,7 @@ const firebaseConfig = {
   projectId: "klesh-test",
   storageBucket: "klesh-test.firebasestorage.app",
   messagingSenderId: "282009735770",
-  appId: "1:282009735770:web:234d7944039fd68f62fe63",
-  measurementId: "G-7WVZB40TDJ"
+  appId: "1:282009735770:web:234d7944039fd68f62fe63"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -14,73 +13,137 @@ const db = firebase.firestore();
 
 // ================== ВОПРОСЫ ==================
 const questions = [
-  { q: "Где обычно можно встретить иксодового клеща — переносчика вируса?", options: ["Только в густом еловом лесу","В траве, кустарниках, на лесных тропах и опушках, в парках","Только в болотистой местности","В сухой степи без растительности"], correct: 1 },
-  { q: "В какое время года риск укуса клеща наиболее высок?", options: ["Декабрь–февраль","Апрель–июнь и август–сентябрь","Только июль","Круглый год одинаков"], correct: 1 },
-  { q: "Как чаще всего клещ попадает на человека?", options: ["Падает с дерева","Прицепляется с травы или кустарника на одежду/обувь","Прыгает с земли","Заносится домашними животными"], correct: 1 },
-  { q: "Что нужно сделать сразу после обнаружения присосавшегося клеща?", options: ["Залить его маслом","Аккуратно удалить и поместить в контейнер","Прижечь йодом","Срочно принять антибиотик"], correct: 1 },
-  { q: "Куда лучше всего обращаться для исследования клеща?", options: ["В продуктовый магазин","В лабораторию Роспотребнадзора","В аптеку","В ветеринарную клинику"], correct: 1 },
-  { q: "Какие симптомы указывают на начало клещевого энцефалита?", options: ["Только боль в месте укуса","Высокая температура, головная боль, тошнота","Зуд и сыпь по всему телу","Кашель и насморк"], correct: 1 },
-  { q: "Существует ли прививка против клещевого энцефалита?", options: ["Да, есть эффективные вакцины","Нет, только антибиотики","Есть, но она не помогает","Только народные средства"], correct: 0 },
-  { q: "Кому рекомендуется вакцинация в первую очередь?", options: ["Только детям до 7 лет","Только пенсионерам","Жителям эндемичных районов, лесникам, туристам","Никому"], correct: 2 },
-  { q: "Какая защита в лесу наиболее эффективна?", options: ["Короткие шорты","Светлая закрытая одежда + репелленты","Нательный крестик","Громкое пение"], correct: 1 },
-  { q: "Что может назначить врач для экстренной профилактики?", options: ["Греющий компресс","Банки и горчичники","Иммуноглобулин","Слабительные"], correct: 2 }
+  { q: "Что является основным переносчиком клещевого энцефалита?", options: ["Комары", "Клещи", "Мухи", "Блохи"], correct: 1 },
+  { q: "В какое время года наиболее активны клещи?", options: ["Зима", "Весна и осень", "Только лето", "Круглый год"], correct: 1 },
+  { q: "Можно ли заразиться через сырое молоко?", options: ["Нет", "Да", "Только через укус", "Через воздух"], correct: 1 },
+  { q: "Как правильно удалять присосавшегося клеща?", options: ["По часовой стрелке", "Против часовой стрелки", "Сдавливать", "Прижигать"], correct: 1 },
+  { q: "Существует ли вакцина от клещевого энцефалита?", options: ["Нет", "Да", "Только для детей", "Только для пожилых"], correct: 1 },
+  { q: "Что делать сразу после укуса клеща?", options: ["Ничего", "Удалить и обработать", "Пить антибиотики", "Наложить масло"], correct: 1 },
+  { q: "Какой цвет одежды лучше защищает от клещей?", options: ["Чёрный", "Светлый", "Красный", "Зелёный"], correct: 1 },
+  { q: "Можно ли использовать масло при удалении клеща?", options: ["Да", "Нет, это опасно", "Только спирт", "Только масло"], correct: 1 },
+  { q: "Сколько примерно длится инкубационный период?", options: ["1-3 дня", "7-14 дней", "1 месяц", "3 месяца"], correct: 1 },
+  { q: "Что является самым надёжным методом защиты?", options: ["Только репелленты", "Вакцина + защита от укусов", "Только осмотр", "Антибиотики"], correct: 1 }
 ];
 
 let currentQ = 0, score = 0, userName = "", answers = [];
+let hasVoted = false;
 
-// Сохранение результата
-async function saveResultToFirebase(percent) {
+// ================== ОПРОС О ПРИВИВКЕ ==================
+async function answerVaccine(yes) {
+  if (hasVoted) return;
+  hasVoted = true;
+
+  document.getElementById('btnYes').disabled = true;
+  document.getElementById('btnNo').disabled = true;
+  document.getElementById('vaccineThankYou').classList.remove('hidden');
+
   try {
-    await db.collection("testResults").add({
-      name: userName,
-      date: new Date().toLocaleString('ru-RU'),
-      score: percent,
-      correct: score,
+    await db.collection("vaccineStats").add({
+      vaccinated: yes,
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
+  } catch (e) {}
+  loadVaccineStats();
+}
+
+async function loadVaccineStats() {
+  const statsEl = document.getElementById('vaccineStats');
+  try {
+    const snapshot = await db.collection("vaccineStats").get();
+    let yesCount = 0, total = 0;
+    snapshot.forEach(doc => {
+      total++;
+      if (doc.data().vaccinated) yesCount++;
+    });
+    const yesPercent = total > 0 ? Math.round((yesCount / total) * 100) : 0;
+    statsEl.innerHTML = `
+      <strong>Статистика прививок:</strong><br>
+      ✅ Да — ${yesPercent}% (${yesCount}) &nbsp;&nbsp; 
+      ❌ Нет — ${100 - yesPercent}% (${total - yesCount})
+    `;
   } catch (e) {
-    console.error("Ошибка сохранения:", e);
+    statsEl.textContent = "Статистика обновляется...";
   }
 }
 
-// Загрузка результатов
-async function showAllResults() {
-  const container = document.getElementById('adminResults');
-  container.innerHTML = '<p>Загрузка...</p>';
-
+// ================== ПОГОДА ==================
+async function loadWeather() {
+  const weatherEl = document.getElementById('weather');
   try {
-    const snapshot = await db.collection("testResults").orderBy("timestamp", "desc").get();
-    
-    if (snapshot.empty) {
-      container.innerHTML = '<p>Пока нет результатов</p>';
-      return;
-    }
+    const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.95&longitude=92.35&current_weather=true');
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const temp = Math.round(data.current_weather?.temperature || 0);
+    weatherEl.innerHTML = `🌡️ Дивногорск: <strong>${temp}°C</strong>`;
+  } catch (e) {
+    weatherEl.innerHTML = `🌡️ Дивногорск: <strong>— °C</strong>`;
+  }
+}
 
-    let html = `<p class="mb-4">Всего прохождений: ${snapshot.size}</p>`;
-    
+// ================== ЛИДЕРБОРД ==================
+async function loadLeaderboard() {
+  const container = document.getElementById('leaderboard');
+  try {
+    const snapshot = await db.collection("testResults")
+      .orderBy("score", "desc")
+      .limit(3)
+      .get();
+
+    let html = '';
+    let place = 1;
+    const medals = ['🥇', '🥈', '🥉'];
+
     snapshot.forEach(doc => {
       const r = doc.data();
       html += `
-        <div class="p-4 bg-gray-50 rounded-2xl mb-3">
-          <strong>${r.name}</strong><br>
-          ${r.date} — <span class="font-bold text-indigo-600">${r.score}% (${r.correct}/10)</span>
+        <div class="leader-item">
+          <span class="medal">${medals[place-1]}</span>
+          <strong>${r.name}</strong>
+          <span class="leader-score">${r.score}%</span>
         </div>`;
+      place++;
     });
 
-    container.innerHTML = html;
+    container.innerHTML = html || '<p>Пока нет результатов</p>';
   } catch (e) {
-    container.innerHTML = `<p class="text-red-500">Ошибка загрузки: ${e.message}</p>`;
+    container.innerHTML = '<p>Ошибка загрузки лидерборда</p>';
   }
 }
 
-// Опросник (остальные функции)
+// ================== АДМИН ==================
+function loginAdmin() {
+  const pass = prompt("Введите пароль администратора:");
+  if (pass === "sofr2928") {
+    document.getElementById('adminContent').classList.remove('hidden');
+    showAllResults();
+  } else {
+    alert("Неверный пароль!");
+  }
+}
+
+async function showAllResults() {
+  const container = document.getElementById('adminResults');
+  container.innerHTML = '<p>Загрузка...</p>';
+  try {
+    const snapshot = await db.collection("testResults").orderBy("timestamp", "desc").get();
+    let html = `<p style="margin-bottom:15px; font-weight:600;">Всего прохождений: ${snapshot.size}</p>`;
+    snapshot.forEach(doc => {
+      const r = doc.data();
+      html += `<div class="result-item"><strong>${r.name}</strong> — ${r.score}%</div>`;
+    });
+    container.innerHTML = html || '<p>Пока нет результатов</p>';
+  } catch (e) {
+    container.innerHTML = '<p>Ошибка загрузки</p>';
+  }
+}
+
+// ================== ТЕСТ ==================
 function startQuiz() {
   userName = document.getElementById('userName').value.trim();
   if (!userName) return alert("Введите ваше имя!");
 
   document.getElementById('startScreen').classList.add('hidden');
   document.getElementById('quizScreen').classList.remove('hidden');
-  document.getElementById('quizUser').textContent = userName;
 
   currentQ = 0;
   answers = [];
@@ -96,10 +159,10 @@ function showQuestion() {
   opts.innerHTML = '';
 
   q.options.forEach((text, i) => {
-    const label = document.createElement('label');
-    label.className = "option-label";
-    label.innerHTML = `<input type="radio" name="q${currentQ}" onchange="selectAnswer(${i})"> ${text}`;
-    opts.appendChild(label);
+    const div = document.createElement('div');
+    div.className = 'option';
+    div.innerHTML = `<input type="radio" name="q${currentQ}" onchange="selectAnswer(${i})"> ${text}`;
+    opts.appendChild(div);
   });
 
   document.getElementById('nextBtn').classList.add('hidden');
@@ -133,25 +196,34 @@ async function showResult() {
 
   const circle = document.getElementById('scoreCircle');
   circle.textContent = percent + '%';
-  circle.style.borderColor = percent >= 80 ? '#10b981' : '#eab308';
+  circle.style.borderColor = percent >= 80 ? '#22c55e' : '#eab308';
 
-  document.getElementById('resultMsg').textContent = percent >= 80 
-    ? 'Отличный результат!' 
-    : 'Есть над чем поработать.';
+  document.getElementById('resultMsg').innerHTML = percent >= 80 
+    ? 'Отличный результат! 🏆' 
+    : 'Есть над чем поработать 📚';
 
   await saveResultToFirebase(percent);
+  loadLeaderboard();
 }
 
-function loginAdmin() {
-  const pass = document.getElementById('adminPass').value;
-  if (pass === "sofr2928") {
-    document.getElementById('adminContent').classList.remove('hidden');
-    showAllResults();
-  } else {
-    alert("Неверный пароль!");
-  }
+async function saveResultToFirebase(percent) {
+  try {
+    await db.collection("testResults").add({
+      name: userName,
+      date: new Date().toLocaleString('ru-RU'),
+      score: percent,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (e) {}
 }
 
 function restartQuiz() {
   location.reload();
 }
+
+// ================== ЗАПУСК ==================
+window.onload = () => {
+  loadWeather();
+  loadLeaderboard();
+  loadVaccineStats();
+};
