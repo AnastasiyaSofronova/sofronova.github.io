@@ -19,7 +19,7 @@
       <div id="weather" class="weather">🌡️ Загрузка погоды...</div>
     </div>
 
-    <!-- ОПРОС О ПРИВИВКЕ (остаётся всегда) -->
+    <!-- ОПРОС О ПРИВИВКЕ -->
     <div id="vaccineScreen" class="card">
       <h2>Вы прививаетесь от клещевого энцефалита?</h2>
       <div class="options-vaccine">
@@ -51,17 +51,13 @@
       <div id="scoreCircle" class="score-circle">0%</div>
       <p id="resultMsg" class="result-msg"></p>
       <button onclick="restartQuiz()" class="btn btn-primary">Пройти заново</button>
-    </div>
 
-    <!-- Интересные факты, памятка и т.д. -->
-    <div class="card">
-      <h2>🧠 Интересные факты о клещах</h2>
-      <div class="facts-list">
-        <p>• Клещи могут жить без еды до 3 лет</p>
-        <p>• Самый опасный период — май и июнь</p>
-        <p>• Клещ чувствует тепло тела человека с 10 метров</p>
-        <p>• Вакцинация защищает на 95–98%</p>
-        <p>• После укуса рекомендуется сдать кровь через 10–14 дней</p>
+      <!-- QR-код 1 (после результата) -->
+      <div style="text-align:center; margin-top:25px;">
+        <p><strong>Поделитесь тестом с друзьями</strong></p>
+        <a href="https://your-site.ru" target="_blank">
+          <img src="qr-code.png" alt="QR-код" style="width:180px; height:180px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.1);">
+        </a>
       </div>
     </div>
 
@@ -98,6 +94,15 @@
     <div class="card leaderboard-card">
       <h2>🏆 Топ-3 лучших результата</h2>
       <div id="leaderboard">Загрузка...</div>
+    </div>
+
+    <!-- QR-код 2 (внизу страницы) -->
+    <div class="card" style="text-align:center;">
+      <h3>Сканируйте QR-код</h3>
+      <a href="https://your-site.ru" target="_blank">
+        <img src="qr-code.png" alt="QR-код" style="width:200px; height:200px; border-radius:16px; box-shadow:0 8px 20px rgba(0,0,0,0.15);">
+      </a>
+      <p style="margin-top:10px; color:#666;">Поделитесь тестом или сохраните ссылку</p>
     </div>
 
     <div id="adminPanel" class="card">
